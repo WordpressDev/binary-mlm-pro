@@ -1,0 +1,152 @@
+<?php
+
+function mlm_payout_reports()
+{
+    global $wpdb, $table_prefix;
+    require_once('admin-mlm-payout--reports-list-table.php');
+    $objpayouts = new PayoutReport_List_Table();
+    $objpayouts->prepare_items();
+    ?>
+
+    <div class='wrap'>
+        <div id="icon-users" class="icon32"></div><h1><?php _e('Payout Report', 'binary-mlm-pro'); ?></h1>
+        <div class="notibar msginfo" style="margin:10px;">
+            <a class="close"></a>
+            <p><?php _e('Given below is the list of all Payout requests that have been successfully processed.', 'binary-mlm-pro'); ?></p>
+        </div>	
+    </div>	
+    <form id="processed_report" name="myform" method="GET" action="">
+        <input type="hidden" name="page" value="<?php echo $_REQUEST['page'] ?>" />
+        <input type="hidden" name="tab" value="payoutreport" />
+
+        <?php
+        if (empty($_GET['id']))
+        {
+            $objpayouts->display();
+        }
+        else
+        {
+            $payout_id = $_GET['id'];
+            $results = $wpdb->get_results("select * from {$table_prefix}mlm_commission where payout_id='$payout_id'");
+
+            foreach ($results as $result)
+            {
+                $pkey = $wpdb->get_var("select user_key from {$table_prefix}mlm_users where id='$result->parent_id'");
+                $unames = explode(',', $result->child_ids);
+                foreach ($unames as $uname)
+                {
+                    $ukey = $wpdb->get_var("select user_key from {$table_prefix}mlm_users where username='$uname'");
+                    $wpdb->query("update {$table_prefix}mlm_leftleg set payout_id='$payout_id' where pkey='$pkey' and ukey='$ukey' and commission_status='1'");
+                    $wpdb->query("update {$table_prefix}mlm_rightleg set payout_id='$payout_id' where pkey='$pkey' and ukey='$ukey' and commission_status='1'");
+                }
+            }
+            ?>
+
+            <table width="100%" border="0" cellpadding="10" cellspacing="0">
+                <tr><td>&nbsp;</td></tr>
+                <tr style="background:#fff;border-color:#bbb;color:#555;">
+                    <th>S.No</th>
+                    <th>Ref.</th>
+                    <th>Full Name</th>
+                    <th>Referral Commision</th>
+                    <th>Pair Commision</th>
+                    <th>Bonus</th>
+                    <th>Amount</th>
+                    <th>Pairs</th>
+                    <th>Downline</th>
+                </tr>
+                <?php
+                $id = $_GET['id'];
+                $sql = "select * from {$table_prefix}mlm_payout where payout_id = $id";
+                $result = mysql_query($sql);
+                $i = 0;
+                $per_page = 5;
+                while ($row = mysql_fetch_array($result))
+                {
+                    $i++;
+                    $user_id = $row['user_id'];
+                    $query = "SELECT user_id,user_key,username from {$table_prefix}mlm_users where id = '$user_id'";
+                    $result1 = mysql_query($query);
+                    while ($rows = mysql_fetch_array($result1))
+                    {
+                        $firstname = get_user_meta($rows['user_id'], 'first_name', true);
+                        $lastname = get_user_meta($rows['user_id'], 'last_name', true);
+
+                        $user_key = $rows['user_key'];
+                        $username = $rows['username'];
+                        for ($x = $payout_id; $x >= 0; $x--)
+                        {
+                            $pid[] = $x;
+                        }
+                        $payout_id = implode("','", $pid);
+                        $left_users = totalLeftLegUsersByPayoutId($user_key, $payout_id);
+                        $right_users = totalRightLegUsersByPayoutId($user_key, $payout_id);
+                        if ($left_users < $right_users)
+                        {
+                            $pairs = $left_users;
+                        }
+                        else
+                        {
+                            $pairs = $right_users;
+                        }
+                    }
+                    ?>
+                    <tr style=" background-color: #f9f9f9;">
+                        <td align='center' style="background-color: #f9f9f9;"><?php echo $i ?></td>
+                        <td align='center' style="background-color: #f9f9f9;"><?php echo $username; ?></td>
+                        <td align='center' style="background-color: #f9f9f9;"><?php echo $firstname . ' ' . $lastname ?></td>
+                        <td align='center' style="background-color: #f9f9f9;"><?php echo $row['referral_commission_amount']; ?></td>
+                        <td align='center' style="background-color: #f9f9f9;"><?php echo $row['commission_amount']; ?></td>
+                        <td align='center' style="background-color: #f9f9f9;"><?php echo $row['bonus_amount']; ?></td>
+                        <td align='center' style="background-color: #f9f9f9;"><?php echo $row['total_amt']; ?></td>
+                        <td align='center' style="background-color: #f9f9f9;"><?php echo $pairs; ?></td>
+                        <td align='center' style="background-color: #f9f9f9;"><strong>Left:</strong><?php echo $left_users . '<br />' ?><strong>Right:</strong><?php echo $right_users ?></td>
+
+                    </tr>
+                    <?php
+                }
+                ?>
+            </table>
+
+            <div><br/><br/><input type="buttom" name="back" id="back" value="&laquo; <?php _e('Back', 'binary-mlm-pro'); ?> " class='button-primary' onclick="window.location = '<?= admin_url() ?>admin.php?page=admin-reports&tab=payoutreports'" style="width:80px">   </div>
+                <?php
+            }
+            ?>
+    </form>	
+    <script language='JavaScript' type='text/javascript'>
+        var frmvalidator = new Validator('myform');
+        //frmvalidator.addValidation('datefrom','req', 'Please enter from date');
+
+    </script>
+    <?php
+    extract($_REQUEST); //echo '<pre>';print_r($_REQUEST);echo '</pre>';
+
+    $sql = "SELECT * FROM {$table_prefix}mlm_payout_master ORDER BY date DESC";
+    $rs = mysql_query($sql);
+    $i = 0;
+    $listArr = array();
+
+    $listArr[-1]['id'] = __('Payout ID', 'binary-mlm-pro');
+    $listArr[-1]['date'] = __('Payout Date', 'binary-mlm-pro');
+    $listArr[-1]['View'] = __('Details', 'binary-mlm-pro');
+
+
+    if (@mysql_num_rows($rs) > 0)
+    {
+        while ($row = mysql_fetch_array($rs))
+        {
+
+
+            $listArr[$i]['id'] = $row['id'];
+            $listArr[$i]['date'] = $row['date'];
+            $listArr[$i]['View'] = $row['id'];
+            $i++;
+        }
+    }
+
+    $value = serialize($listArr);
+    ?>
+
+    <?php
+}
+?>

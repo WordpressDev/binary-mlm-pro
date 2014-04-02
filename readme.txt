@@ -24,7 +24,6 @@ New Features in v2.9
 7. Setting in admin for specifiying the redirect page for the member affiliate URL.
 8. New Report in admin to show full details of individual payout.
 
-
 New Features in v2.8
 
 1. SEO Friendly Affiliate URLs (Replicated Sites)
