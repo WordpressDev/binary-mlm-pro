@@ -508,4 +508,20 @@ github_plugin_updater_mlm_init(array(
 
 add_role('mlm_user', __('MLM User'));
 
+add_action('init', 'update_user_role');
+
+function update_user_role()
+{
+    global $wpdb, $table_prefix;
+    $results = $wpdb->get_results("select user_id from {$table_prefix}mlm_users");
+    foreach ($results as $result)
+    {
+        wp_update_user(array
+            (
+            'ID' => $result->user_id,
+            'role' => 'mlm_user'
+        ));
+    }
+}
+
 ?>

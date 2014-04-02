@@ -1,6 +1,7 @@
 <?php
 
-function mlmGeneral() {
+function mlmGeneral()
+{
     global $wpdb;
     //get database table prefix
     $table_prefix = mlm_core_get_table_prefix();
@@ -9,7 +10,8 @@ function mlmGeneral() {
     $chk = 'error';
 
     //most outer if condition
-    if (isset($_POST['mlm_general_settings'])) {
+    if (isset($_POST['mlm_general_settings']))
+    {
         $currency = sanitize_text_field($_POST['currency']);
 
         if (checkInputField($currency))
@@ -17,25 +19,28 @@ function mlmGeneral() {
 
         $reg_url = sanitize_text_field($_POST['reg_url']);
 
-        if (checkInputField($reg_url))
+        if (isset($_POST['wp_reg']))
             $error .= "\n Please Fill The URL.";
         //if any error occoured
         if (!empty($error))
             $error = nl2br($error);
-        else {
+        else
+        {
             $chk = '';
 
             update_option('wp_mlm_general_settings', $_POST);
 
             /*             * ********code to save the product price that have payment status 1 and product price 0 ********* */
             $mlm_general_settings = get_option('wp_mlm_general_settings');
-            if (!empty($mlm_general_settings['product_price'])) {
+            if (!empty($mlm_general_settings['product_price']))
+            {
                 $product_price = $mlm_general_settings['product_price'];
                 $sql = "SELECT id 
 						FROM {$table_prefix}mlm_users
 						WHERE payment_status='1' AND product_price='0'";
                 $ids = $wpdb->get_results($sql);
-                foreach ($ids as $id) {
+                foreach ($ids as $id)
+                {
                     $sql = "update {$table_prefix}mlm_users set product_price='{$product_price}' where id ='{$id->id}' ";
 
                     mysql_query($sql);
@@ -48,7 +53,8 @@ function mlmGeneral() {
             $msg = "<span style='color:green;'>Your general settings has been successfully updated.</span>";
         }
     }// end outer if condition
-    if(empty($_POST['process_withdrawal']))$_POST['process_withdrawal']='Manually';
+    if (empty($_POST['process_withdrawal']))
+        $_POST['process_withdrawal'] = 'Manually';
     ?>
     <script>
         jQuery(document).ready(function() {
@@ -85,7 +91,7 @@ function mlmGeneral() {
     </script>	
 
     <script language="javascript">
-       
+
         function CheckBoxChanged(checkbox)
         {
             if (checkbox.checked == true) {
@@ -94,7 +100,7 @@ function mlmGeneral() {
             }
             else
             {
-                jQuery("#reg_url").attr("readonly","readonly");
+                jQuery("#reg_url").attr("readonly", "readonly");
                 //document.getElementById('reg_url').focus();
             }
         }
@@ -102,16 +108,17 @@ function mlmGeneral() {
         {
             if (document.getElementById('reg_url').value == '')
             {
-               // alert('Please Fill The URL');
-               // document.getElementById('reg_url').focus();
-               // return false;
+                alert('Please Fill The URL');
+                document.getElementById('reg_url').focus();
+                return false;
             }
         }
 
 
     </script>
     <?php
-    if ($chk != '') {
+    if ($chk != '')
+    {
         $mlm_settings = get_option('wp_mlm_general_settings');
         $URL = empty($mlm_settings['affiliate_url']) ? '' : $mlm_settings['affiliate_url'] . '/';
         include 'js-validation-file.html';
@@ -144,125 +151,41 @@ function mlmGeneral() {
             <?php endif; ?>
 
             <?php
-            if (empty($mlm_settings)) {
-                ?>
-                <form name="admin_general_settings" method="post" action="" id="admin_general_settings">
-                    <table border="0" cellpadding="0" cellspacing="0" width="60%" class="form-table">
-                        <tr>
-                            <th scope="row" class="admin-settings">
-                                <a style="cursor:pointer;" title="Click for Help!" onclick="toggleVisibility('admin-mlm-currency');"><?php _e('Currency', 'binary-mlm-pro'); ?> <span style="color:red;">*</span>: </a>
-                            </th>
-                            <td>
-                                <?php
-                                $sql = "SELECT iso3, currency FROM {$table_prefix}mlm_currency ORDER BY iso3";
-                                $results = $wpdb->get_results($sql);
-                                ?>
-                                <select name="currency" id="currency" >
-                                    <option value=""><?php _e('Select Currency', 'binary-mlm-pro'); ?></option>
-                                    <?php
-                                    foreach ($results as $row) {
-                                        if ($_POST['currency'] == $row->iso3)
-                                            $selected = 'selected';
-                                        else
-                                            $selected = '';
-                                        ?>
-                                        <option value="<?= $row->iso3; ?>" <?= $selected ?>><?= $row->iso3 . " - " . $row->currency; ?></option>
-                                        <?php
-                                    }
-                                    ?>
-                                </select>
-                                <div class="toggle-visibility" id="admin-mlm-currency"><?php _e('Select your currency which will you use.', 'binary-mlm-pro'); ?></div>
-                            </td>
-
-                        </tr>
-                        <tr>
-
-                            <th scope="row" class="admin-setting" >
-                                <strong><?php _e('Use WP registration page'); ?></strong>
-                            </th>
-                            <td>
-                                <input type="checkbox" name="wp_reg" id="wp_reg" value="1" <?= ($_POST['wp_reg'] == 1) ? ' checked="checked"' : ''; ?> onclick="CheckBoxChanged(this);" onblur="show1();" />
-                            </td> 
-                        </tr>
-                        <tr>
-
-                            <th scope="row" class="admin-setting" >
-                                <strong><?php _e('URL of registration page', 'binary-mlm-pro'); ?><span style="color:red;"></span>:</strong>
-                            </th>
-                            <td>
-                                <?= site_url() . '/' ?><input type="text" name="reg_url" id="reg_url" value="<?= empty($_POST['reg_url']) ? '' : $_POST['reg_url'] ?>" readonly="true"/>
-                            </td>
-
-                        </tr>
-                        <tr>
-
-                            <th scope="row" class="admin-setting" >
-                                <strong><?php _e('Redirect Affiliate URL', 'unilevel-mlm-pro'); ?>:</strong>
-                            </th>
-                            <td>
-            <?= site_url() . '/' ?><input type="text" name="affiliate_url" id="affiliate_url" value="<?= empty($_POST['affiliate_url']) ? '' : $_POST['affiliate_url'] ?>" />
-                            </td>
-
-                        </tr>
-                        <?php general_settings_epin(); ?>
-
-                        <tr>
-
-                            <th scope="row" class="admin-settings">
-                                <strong><?php _e('Product price', 'binary-mlm-pro'); ?> <span style="color:red;">*</span>:</strong> 
-                            </th>
-
-                            <td>
-                                <input type="text" name="product_price" id="product_price" value="<?= empty($_POST['product_price']) ? '0' : $_POST['product_price'] ?>"  onkeypress="return isNumberKey(event)"/>
-
-                            </td>	
-
-                        </tr>
-                        <tr>
-
-                            <th scope="row" class="admin-settings">
-                                <strong><?php _e('Process Withdrawals', 'binary-mlm-pro'); ?> <span style="color:red;">*</span>:</strong> 
-                            </th>
-
-                            <td>
-                                <input type="radio" name="process_withdrawal" id="process_withdrawal" value="Automatically" <?= (!empty($_POST['process_withdrawal']) && $_POST['process_withdrawal'] == 'Automatically') ? ' checked="checked"' : '' ?> />Automatically
-                                <input type="radio" name="process_withdrawal" id="process_withdrawal" value="Manually" <?= (!empty($_POST['process_withdrawal']) && $_POST['process_withdrawal'] == 'Manually') ? ' checked="checked"' : '' ?> />Manually
-
-                            </td>	
-
-                        </tr>
-                    </table>
-                    <p class="submit">
-                        <input type="submit" name="mlm_general_settings" id="mlm_general_settings" value="<?php _e('Update Options', 'binary-mlm-pro'); ?> &raquo;" class='button-primary' onclick="needToConfirm = false;">
-                    </p>
-                </form>
-            </div>
-
-            <script language="JavaScript">
-                populateArrays();
-            </script>
-            <?php
-        }
-        else if (!empty($mlm_settings)) {
+            $currency = (isset($_POST['currency']) ? $_POST['currency'] : (isset($mlm_settings['currency']) ? $mlm_settings['currency'] : ''));
+            $wp_reg = (isset($_POST['wp_reg']) ? $_POST['wp_reg'] : (isset($mlm_settings['wp_reg']) ? $mlm_settings['wp_reg'] : ''));
+            $reg_url = (isset($_POST['reg_url']) ? $_POST['reg_url'] : (isset($mlm_settings['reg_url']) ? $mlm_settings['reg_url'] : ''));
+            $affiliate_url = (isset($_POST['affiliate_url']) ? $_POST['affiliate_url'] : (isset($mlm_settings['affiliate_url']) ? $mlm_settings['affiliate_url'] : ''));
+            $product_price = (isset($_POST['product_price']) ? $_POST['product_price'] : (isset($mlm_settings['product_price']) ? $mlm_settings['product_price'] : ''));
+            $process_withdrawal = (isset($_POST['process_withdrawal']) ? $_POST['process_withdrawal'] : (isset($mlm_settings['process_withdrawal']) ? $mlm_settings['process_withdrawal'] : ''));
             ?>
-
             <form name="admin_general_settings" method="post" action="" id="admin_general_settings">
-                <table border="0" cellpadding="0" cellspacing="0" width="100%" class="form-table">
+                <table border="0" cellpadding="0" cellspacing="0" width="60%" class="form-table">
                     <tr>
-
                         <th scope="row" class="admin-settings">
                             <a style="cursor:pointer;" title="Click for Help!" onclick="toggleVisibility('admin-mlm-currency');"><?php _e('Currency', 'binary-mlm-pro'); ?> <span style="color:red;">*</span>: </a>
                         </th>
                         <td>
                             <?php
-                            $sql = "SELECT iso3, currency FROM {$table_prefix}mlm_currency
-                    WHERE iso3 = '" . $mlm_settings['currency'] . "' ORDER BY iso3";
-                            //$sql = mysql_fetch_array(mysql_query($sql));
+                            $sql = "SELECT iso3, currency FROM {$table_prefix}mlm_currency ORDER BY iso3";
+                            $results = $wpdb->get_results($sql);
                             ?>
-                            <input type="text" name="currency" id="currency" value="<?= $mlm_settings['currency'] ?>" readonly />
-                            <div class="toggle-visibility" id="admin-mlm-currency"><?php _e('You can not change the currency.', 'binary-mlm-pro'); ?></div>
+                            <select name="currency" id="currency" >
+                                <option value=""><?php _e('Select Currency', 'binary-mlm-pro'); ?></option>
+                                <?php
+                                foreach ($results as $row)
+                                {
+                                    if ($currency == $row->iso3)
+                                        $selected = 'selected';
+                                    else
+                                        $selected = '';
+                                    ?>
+                                    <option value="<?= $row->iso3; ?>" <?= $selected ?>><?= $row->iso3 . " - " . $row->currency; ?></option>
+                                    <?php
+                                }
+                                ?>
+                            </select>
+                            <div class="toggle-visibility" id="admin-mlm-currency"><?php _e('Select your currency which will you use.', 'binary-mlm-pro'); ?></div>
                         </td>
-
 
                     </tr>
                     <tr>
@@ -271,7 +194,7 @@ function mlmGeneral() {
                             <strong><?php _e('Use WP registration page'); ?></strong>
                         </th>
                         <td>
-                            <input type="checkbox" name="wp_reg" id="wp_reg" value="1" <?php echo ($mlm_settings['wp_reg'] == 1) ? ' checked="checked"' : ''; ?>  onclick="CheckBoxChanged(this);"/>
+                            <input type="checkbox" name="wp_reg" id="wp_reg" value="1" <?= ($wp_reg == 1) ? ' checked="checked"' : ''; ?> onclick="CheckBoxChanged(this);" onblur="show1();" />
                         </td> 
                     </tr>
                     <tr>
@@ -280,28 +203,30 @@ function mlmGeneral() {
                             <strong><?php _e('URL of registration page', 'binary-mlm-pro'); ?><span style="color:red;"></span>:</strong>
                         </th>
                         <td>
-                            <?= site_url() . '/' ?><input type="text" name="reg_url" id="reg_url" value="<?= empty($mlm_settings['reg_url']) ? '' : $mlm_settings['reg_url'] ?>" onblur="show1()" readonly="true" />
+                            <?= site_url() . '/' ?><input type="text" name="reg_url" id="reg_url" value="<?= $reg_url ?>" readonly="true"/>
                         </td>
 
                     </tr>
-                     <tr>
+                    <tr>
 
                         <th scope="row" class="admin-setting" >
                             <strong><?php _e('Redirect Affiliate URL', 'unilevel-mlm-pro'); ?>:</strong>
                         </th>
                         <td>
-            <?= site_url() . '/' ?><input type="text" name="affiliate_url" id="affiliate_url" value="<?= empty($mlm_settings['affiliate_url']) ? '' : $mlm_settings['affiliate_url'] ?>" />
+                            <?= site_url() . '/' ?><input type="text" name="affiliate_url" id="affiliate_url" value="<?= $affiliate_url ?>" />
                         </td>
 
                     </tr>
                     <?php general_settings_epin(); ?>
 
                     <tr>
+
                         <th scope="row" class="admin-settings">
-                            <strong><?php _e('Product price', 'binary-mlm-pro'); ?> <span style="color:red;">*</span>: </strong>
-                        </th>			
+                            <strong><?php _e('Product price', 'binary-mlm-pro'); ?> <span style="color:red;">*</span>:</strong> 
+                        </th>
+
                         <td>
-                            <input type="text" name="product_price" id="product_price" value="<?= empty($mlm_settings['product_price']) ? '0' : $mlm_settings['product_price'] ?>"  onkeypress="return isNumberKey(event)"/>
+                            <input type="text" name="product_price" id="product_price" value="<?= $product_price ?>"  onkeypress="return isNumberKey(event)"/>
 
                         </td>	
 
@@ -313,8 +238,8 @@ function mlmGeneral() {
                         </th>
 
                         <td>
-                            <input type="radio" name="process_withdrawal" id="process_withdrawal" value="Automatically" <?= (!empty($mlm_settings['process_withdrawal']) && $mlm_settings['process_withdrawal'] == 'Automatically') ? ' checked="checked"' : '' ?> />Automatically
-                            <input type="radio" name="process_withdrawal" id="process_withdrawal" value="Manually" <?= (!empty($mlm_settings['process_withdrawal']) && $mlm_settings['process_withdrawal'] == 'Manually') ? ' checked="checked"' : '' ?> />Manually
+                            <input type="radio" name="process_withdrawal" id="process_withdrawal" value="Automatically" <?= ($process_withdrawal == 'Automatically') ? ' checked="checked"' : '' ?> />Automatically
+                            <input type="radio" name="process_withdrawal" id="process_withdrawal" value="Manually" <?= (    $process_withdrawal == 'Manually') ? ' checked="checked"' : '' ?> />Manually
 
                         </td>	
 
@@ -324,9 +249,12 @@ function mlmGeneral() {
                     <input type="submit" name="mlm_general_settings" id="mlm_general_settings" value="<?php _e('Update Options', 'binary-mlm-pro'); ?> &raquo;" class='button-primary' onclick="needToConfirm = false;">
                 </p>
             </form>
-            </div>
-            <?php
-        }
+        </div>
+
+        <script language="JavaScript">
+            populateArrays();
+        </script>
+        <?php
     } // end if statement
     else
         _e($msg);
