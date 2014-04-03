@@ -48,8 +48,8 @@ function mlm_payout_reports()
                     <th>S.No</th>
                     <th>Ref.</th>
                     <th>Full Name</th>
-                    <th>Referral Commision</th>
-                    <th>Pair Commision</th>
+                    <th>Referral Commission</th>
+                    <th>Pair Commission</th>
                     <th>Bonus</th>
                     <th>Amount</th>
                     <th>Pairs</th>
@@ -74,21 +74,7 @@ function mlm_payout_reports()
 
                         $user_key = $rows['user_key'];
                         $username = $rows['username'];
-                        for ($x = $payout_id; $x >= 0; $x--)
-                        {
-                            $pid[] = $x;
-                        }
-                        $payout_id = implode("','", $pid);
-                        $left_users = totalLeftLegUsersByPayoutId($user_key, $payout_id);
-                        $right_users = totalRightLegUsersByPayoutId($user_key, $payout_id);
-                        if ($left_users < $right_users)
-                        {
-                            $pairs = $left_users;
-                        }
-                        else
-                        {
-                            $pairs = $right_users;
-                        }
+                        $record = calculatelegUsersByPayoutId($user_key, $payout_id);
                     }
                     ?>
                     <tr style=" background-color: #f9f9f9;">
@@ -99,8 +85,8 @@ function mlm_payout_reports()
                         <td align='center' style="background-color: #f9f9f9;"><?php echo $row['commission_amount']; ?></td>
                         <td align='center' style="background-color: #f9f9f9;"><?php echo $row['bonus_amount']; ?></td>
                         <td align='center' style="background-color: #f9f9f9;"><?php echo $row['total_amt']; ?></td>
-                        <td align='center' style="background-color: #f9f9f9;"><?php echo $pairs; ?></td>
-                        <td align='center' style="background-color: #f9f9f9;"><strong>Left:</strong><?php echo $left_users . '<br />' ?><strong>Right:</strong><?php echo $right_users ?></td>
+                        <td align='center' style="background-color: #f9f9f9;"><?php echo $record['p']; ?></td>
+                        <td align='center' style="background-color: #f9f9f9;"><strong>Left:</strong><?php echo $record['l'] . '<br />' ?><strong>Right:</strong><?php echo $record['r'] ?></td>
 
                     </tr>
                     <?php
